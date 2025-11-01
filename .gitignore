@@ -1,0 +1,13 @@
+# R session and history files
+.Rhistory
+.RData
+.Ruserdata
+
+# RStudio-specific files
+.Rproj.user/
+*.Rproj
+
+# Folders
+data/
+
+
