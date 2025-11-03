@@ -26,5 +26,5 @@ tar_source()
 
 
 list(
-  problem1_targets()
+  e1p1_targets()
 )
