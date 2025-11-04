@@ -1,3 +1,6 @@
+# P1 ----------------------------------------------------------------------
+
+
 e1p1_targets <- function() {
   list(
     tar_target(
@@ -71,21 +74,85 @@ e1p1_targets <- function() {
         out_path
       },
       format = "file"
-    ),
-    tar_quarto(e1_report, "data/reports/exercise-set-1.qmd")
+    )
   )
 }
 
+
+# P2 ----------------------------------------------------------------------
+
+
 e1p2_targets <- function() {
-  
+  tar_plan(
+    e1p2_train_syn = fread("data/ex_1/train_syn.csv"),
+    e1p2_test_syn = fread("data/ex_1/test_syn.csv"),
+    e1p2_valid_syn = fread("data/ex_1/valid_syn.csv"),
+    e1p2_trva = rbind(e1p2_train_syn, e1p2_valid_syn),
+    e1p2_deg = 0:8,
+    tar_group_by(
+      e1p2_params_dt,
+      {
+        dt <- data.table(
+          train_data = list(e1p2_train_syn, e1p2_train_syn, e1p2_train_syn, e1p2_trva, e1p2_trva),
+          test_data = list(e1p2_train_syn, e1p2_valid_syn, e1p2_test_syn, e1p2_test_syn, e1p2_trva),
+          name = c("Train", "Validation", "Test", "TestTRVA", "CV"),
+          cv_err = c(rep(FALSE, 4), TRUE),
+          k = c(rep(1,4), 10)
+        )
+        dt[, row_id := .I]
+        dt_expanded <- CJ(row_id = dt$row_id, deg = e1p2_deg)[dt, on = "row_id"]
+        dt_expanded[, row_id := .GRP, by = .I]
+      },
+      row_id
+    ),
+    tar_target(
+      e1p2_results,
+      {
+        params <- list(train_data = e1p2_params_dt$train_data[[1]],
+                       test_data = e1p2_params_dt$test_data[[1]],
+                       deg = e1p2_params_dt$deg,
+                       name = e1p2_params_dt$name,
+                       cv_err = e1p2_params_dt$cv_err,
+                       k = e1p2_params_dt$k)
+        do.call(p2_controller, params)
+      },
+      pattern = map(e1p2_params_dt),
+      iteration = "list"
+    ),
+    tar_target(
+      e1p2_a,
+      {
+        dt_long <- rbindlist(e1p2_results)
+        dt <- dcast.data.table(dt_long, as.formula("deg ~ name"))
+        setnames(dt, old = "deg", new = "Degree")
+        setcolorder(dt, c("Degree", "Train", "Validation", "Test", "TestTRVA", "CV"))
+        setkey(dt, NULL)
+      }
+    ),
+    tar_target(
+      e1p2a_min_vals,
+      {
+        cols <- c("Validation", "CV")
+        
+        rbindlist(lapply(cols, function(col) {
+          e1p2_a[which.min(get(col)), .(Metric = col, Degree, Value = get(col))]
+        }))
+      }
+    )
+  )
 }
 
+
+
+# E1 ALL ------------------------------------------------------------------
 
 
 # List all e1 targets
 e1_targets <- function() {
   list(
-    e1p1_targets()
+    e1p1_targets(),
+    e1p2_targets(),
+    tar_quarto(e1_report, "data/reports/exercise-set-1.qmd")
   )
 }
 
