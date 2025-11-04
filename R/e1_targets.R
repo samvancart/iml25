@@ -1,43 +1,43 @@
 e1p1_targets <- function() {
   list(
     tar_target(
-      name = prob1_dt,
+      name = p1_dt,
       command = fread("data/iml25-term-project/train.csv")
     ),
     tar_target(
-      task_a_dt,
-      prob1_dt[, c("id", "partlybad") := NULL]
+      p1_a,
+      p1_dt[, c("id", "partlybad") := NULL]
     ),
     tar_target(
-      task_b,
-      summary(task_a_dt[, c("T84.mean","UV_A.mean","CS.mean")])
+      p1_b,
+      summary(p1_a[, c("T84.mean","UV_A.mean","CS.mean")])
     ),
     tar_target(
-      task_c,
+      p1_c,
       {
-        t84 <- task_a_dt$T84.mean
+        t84 <- p1_a$T84.mean
         t84_mean <- mean(t84)
         t84_sd <- sd(t84)
         list(t84_mean = t84_mean, t84_sd = t84_sd)
       }
     ),
     tar_target(
-      task_d,
+      p1_d,
       {
         file <- "data/plots/ex1_p1_d.PNG"
         png(file, width = 600, height = 400)
         par(mfrow = c(1, 2))
-        barplot(table(task_a_dt$class4), main = "Barplot of class4")
-        hist(task_a_dt$CO242.mean, main = "Histogram of CO242.mean", xlab = "CO242.mean")
+        barplot(table(p1_a$class4), main = "Barplot of class4")
+        hist(p1_a$CO242.mean, main = "Histogram of CO242.mean", xlab = "CO242.mean")
         dev.off()
         file
       },
       format = "file"
     ),
     tar_target(
-      task_e,
+      p1_e,
       {
-        dt <- task_a_dt[, c("UV_A.mean","T84.mean","H2O84.mean")]
+        dt <- p1_a[, c("UV_A.mean","T84.mean","H2O84.mean")]
         file <- "data/plots/ex1_p1_e.PNG"
         png(file, width = 600, height = 400)
         pairs(dt) # Scatterplot matrix
@@ -46,9 +46,9 @@ e1p1_targets <- function() {
       }
     ),
     tar_target(
-      task_f,
+      p1_f,
       {
-        train_dt <- copy(prob1_dt)
+        train_dt <- copy(p1_dt)
         test_dt <- fread("data/iml25-term-project/test.csv")
         
         most_common_class <- names(sort(table(train_dt$class4), decreasing = TRUE))[1]
@@ -64,10 +64,10 @@ e1p1_targets <- function() {
       }
     ),
     tar_target(
-      task_f_file,
+      p1_f_file,
       {
         out_path <- paste0("data/iml25-term-project/dummy_predictions.csv")
-        fwrite(task_f, file = out_path)
+        fwrite(p1_f, file = out_path)
         out_path
       },
       format = "file"
@@ -76,10 +76,18 @@ e1p1_targets <- function() {
   )
 }
 
+e1p2_targets <- function() {
+  
+}
 
 
 
-
+# List all e1 targets
+e1_targets <- function() {
+  list(
+    e1p1_targets()
+  )
+}
 
 
 

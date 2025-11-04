@@ -10,7 +10,7 @@ library(tarchetypes)
 
 
 tar_option_set(
-  packages = c("data.table", "tinytex", "quarto"),
+  packages = c("data.table", "tinytex", "quarto", "boot"),
   controller = crew::crew_controller_local(workers = 2, seconds_idle = 60)
 
 )
@@ -26,5 +26,5 @@ tar_source()
 
 
 list(
-  e1p1_targets()
+  e1_targets()
 )
