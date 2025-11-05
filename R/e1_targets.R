@@ -138,6 +138,94 @@ e1p2_targets <- function() {
           e1p2_a[which.min(get(col)), .(Metric = col, Degree, Value = get(col))]
         }))
       }
+    ),
+    tar_target(
+      e1p2_b_plots,
+      {
+        p <- c(0:4, 8)
+        plot_path <- "data/plots/e1p2_b_grid.png"
+        png(plot_path, width = 1200, height = 800)
+        par(mfrow = c(2, 3), mar = c(4, 4, 2, 1))
+        
+        for (deg in p) {
+          glm_fit_result <- glm_fit(train_data = e1p2_train_syn, deg = deg)
+          x <- e1p2_train_syn$x
+          y <- e1p2_train_syn$y
+          x_grid <- seq(from = -3, to = 3, length.out = 256)
+          y_pred <- predict(glm_fit_result, newdata = data.table(x = x_grid))
+          
+          plot(x, y, main = paste("p =", deg), xlab = "x", ylab = "y", pch = 19, col = "blue", cex.main = 1.8, cex.lab = 1.8, cex.axis = 1.8)
+          lines(x_grid, y_pred, col = "black", lwd = 2)
+        }
+        
+        dev.off()
+        
+        plot_path
+      },
+      format = "file"
+    ),
+    e1p2_train_real = fread("data/ex_1/train_real.csv"),
+    e1p2_test_real = fread("data/ex_1/test_real.csv"),
+    tar_group_by(
+      e1p2_c_params_dt,
+      {
+        dt <- data.table(
+          data1 = list(e1p2_train_real, e1p2_train_real, e1p2_train_real),
+          data2 = list(e1p2_train_real, e1p2_test_real, e1p2_train_real),
+          name = c("Train", "Test", "CV"),
+          cv_err = c(rep(FALSE, 2), TRUE)
+        )
+        dt[, row_id := .I]
+        dt2 <- data.table(
+          regressor = c("Dummy", "OLS", "RF", "SVR", "GBM"),
+          caret_method = c("null", "lm", "rf", "svmRadial", "gbm")
+        )
+        dt[, key := 1]
+        dt2[, key := 1]
+        
+        # Cross join row_id with model_map
+        dt_expanded <- merge(dt, dt2, by = "key", allow.cartesian = TRUE)[, key := NULL]
+        dt_expanded[, row_id := .GRP, by = .I]
+      },
+      row_id
+    ),
+    tar_target(
+      e1p2_c_results,
+      {
+        params <- list(data1 = e1p2_c_params_dt$data1[[1]],
+                       data2 = e1p2_c_params_dt$data2[[1]],
+                       name = e1p2_c_params_dt$name,
+                       cv_err = e1p2_c_params_dt$cv_err,
+                       regressor = e1p2_c_params_dt$regressor,
+                       caret_method = e1p2_c_params_dt$caret_method
+                       )
+        do.call(p2_c_fit_controller, params)
+      },
+      pattern = map(e1p2_c_params_dt),
+      iteration = "list"
+    ),
+    tar_target(
+      e1p2_c,
+      {
+        dt_long <- rbindlist(e1p2_c_results)
+        dt <- dcast.data.table(dt_long, as.formula("regressor ~ name"), value.var = "rmse")
+        regressor_order <- c("Dummy", "OLS", "RF", "SVR", "GBM")
+        dt[, regressor := factor(regressor, levels = regressor_order)]
+        setorder(dt, regressor)
+        setnames(dt, old = "regressor", new = "Regressor")
+        setcolorder(dt, c("Regressor", "Train", "Test", "CV"))
+        setkey(dt, NULL)
+      }
+    ),
+    tar_target(
+      e1p2c_min_vals,
+      {
+        cols <- c("Train", "Test","CV")
+        
+        rbindlist(lapply(cols, function(col) {
+          e1p2_c[which.min(get(col)), .(Metric = col, Regressor, Value = get(col))]
+        }))
+      }
     )
   )
 }

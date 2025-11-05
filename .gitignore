@@ -7,8 +7,15 @@
 .Rproj.user/
 *.Rproj
 
+# Plot files
+Rplots.pdf
+
 # Folders
 data/
 renv/
 _targets/
+
+# Files
+code.txt
+
 

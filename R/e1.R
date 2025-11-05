@@ -24,6 +24,10 @@ calc_mse <- function(data, glm_fit, y_col = "y", seed = 1) {
   mse
 }
 
+calc_rmse <- function(actual, predicted) {
+  sqrt(mean((actual - predicted)^2))
+}
+
 # Calculate k-fold cross-validation on a linear model computed using
 # the above glm_fit function
 calc_cv_error <- function(data, glm_fit, deg, k = 10, seed = 1) {
@@ -38,7 +42,7 @@ p2_controller <- function(train_data, test_data, deg, name, cv_err = FALSE, x_co
   
   set.seed(seed)
   
-  glm_fit_result <- glm_fit(train_data = train_data, deg = deg, seed = seed)
+  glm_fit_result <- glm_fit(train_data = train_data, deg = deg, x_col = x_col, y_col = y_col, seed = seed)
 
   if(cv_err) {
     err <- calc_cv_error(data = train_data, glm_fit =  glm_fit_result, deg = deg, k = k, seed = seed)
@@ -49,6 +53,42 @@ p2_controller <- function(train_data, test_data, deg, name, cv_err = FALSE, x_co
 }
 
 
+p2_c_fit_controller <- function(
+    data1,
+    data2,
+    name,
+    regressor,
+    y_col = "Next_Tmax",
+    formula = NULL,
+    caret_method = "lm",
+    cv_err = FALSE,
+    seed = 1,
+    ...
+) {
+  set.seed(seed)
+  
+  if(is.null(formula)) {
+    formula <- as.formula(paste(y_col, "~ ."))
+  }
+  
+  ctrl <- if (cv_err) {
+    trainControl(method = "cv", number = 10)
+  } else {
+    trainControl(method = "none")
+  }
+  
+  model <- train(form = formula, data = data1, method = caret_method, trControl = ctrl, ...)
+  
+  rmse <- if(cv_err) {
+    mean(model$resample$RMSE)
+  } else {
+    pred <- predict(model, newdata = data2)
+    actual <- data2[[y_col]]
+    sqrt(mean((actual - pred)^2))
+  }
+  
+  data.table(regressor = regressor, name = name, rmse = rmse)
+}
 
 
 
