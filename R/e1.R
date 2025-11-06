@@ -37,7 +37,8 @@ calc_cv_error <- function(data, glm_fit, deg, k = 10, seed = 1) {
   cv_err$delta[1]
 }
 
-
+# Fit polynomial model with order = deg and return data.table with deg, name and MSE.
+# The MSE is calculated from either the fitted model or from a k-fold cross-validation function's output.
 p2_controller <- function(train_data, test_data, deg, name, cv_err = FALSE, x_col = "x", y_col = "y", k = 10, seed = 1) {
   
   set.seed(seed)
@@ -52,7 +53,8 @@ p2_controller <- function(train_data, test_data, deg, name, cv_err = FALSE, x_co
   data.table(deg = deg, name = name, err = err)
 }
 
-
+# Fit a model (using the caret library) defined in paramater caret_model and optionally use 10-fold cross_validation (cv_err = TRUE).
+# Return the RMSE in a data.table also including name and regressor.
 p2_c_fit_controller <- function(
     data1,
     data2,
