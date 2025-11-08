@@ -231,6 +231,112 @@ e1p2_targets <- function() {
 }
 
 
+e1p3_targets <- function() {
+  tar_plan(
+    tar_target(
+      e1p3_train,
+      {
+        set.seed(1)
+        n <- 1000
+        
+        train_list <- lapply(seq(n), function(i) {
+          x <- runif(n = 10, -3, 3)
+          e <- rnorm(10, 0, 0.4)
+          fx <- get_e1p3_fx(x)
+          y <- fx+e
+          data.table(y = y, x = x)
+        })
+        train_list
+      }
+    ),
+    tar_group_by(
+      e1p3_runtable,
+      {
+        set.seed(1)
+        e0 <- rnorm(1000, 0, 0.4)
+        deg <- c(0:6)
+        dt1 <- as.data.table(expand.grid(train=e1p3_train, deg=deg))
+        dt1[, row_id := .GRP, .I]
+        dt2 <- as.data.table(expand.grid(e0=e0, deg=deg))
+        dt2[, row_id := .GRP, .I]
+        
+        dt <- merge(dt1[, c("row_id", "train")], dt2, by = c("row_id"))
+        
+      },
+      row_id
+    ),
+    tar_target(
+      e1p3_pred,
+      {
+        set.seed(1)
+        
+        f0 <- get_e1p3_fx(0)
+        e0 <- e1p3_runtable$e0
+        y0 <- f0 + e0
+        fit_args <- list(train_data = e1p3_runtable$train[[1]], deg = e1p3_runtable$deg)
+        fit <- do.call(glm_fit, fit_args)
+        f_hat0 <- predict(fit, newdata = data.table(x = 0))
+        data.table(f0 = f0, y0 = y0, f_hat0 = f_hat0, deg = e1p3_runtable$deg)
+      },
+      pattern = map(e1p3_runtable)
+    ),
+    tar_target(
+      e1p3_b1,
+      {
+        dt <- e1p3_pred[, .(
+          BiasSq = (mean(f_hat0) - mean(f0))^2,
+          Variance = var(f_hat0),
+          Irreducible = var(y0 - f0)
+        ), by = deg]
+        dt[, Total := BiasSq + Variance + Irreducible]
+        dt[, MSE := BiasSq + Variance + Irreducible]
+        setnames(dt, old = "deg", new = "Degree")
+      }
+    ),
+    tar_target(
+      e1p3_b2,
+      {
+        png_path <- "data/plots/e1p3_b2.png"
+        png(png_path, width = 800, height = 800)
+        
+        par(mfrow = c(2, 2))
+        
+        # Squared Loss (MSE)
+        plot(e1p3_b1$Degree, e1p3_b1$MSE, type = "n",
+             main = "Squared Loss (MSE)", xlab = "Polynomial Degree", ylab = "MSE")
+        lines(spline(e1p3_b1$Degree, e1p3_b1$MSE, n = 256), lwd = 2)
+        points(e1p3_b1$Degree, e1p3_b1$MSE, pch = 16)
+        
+        # Irreducible Error
+        plot(e1p3_b1$Degree, e1p3_b1$Irreducible, type = "n",
+             main = "Irreducible Error", xlab = "Polynomial Degree", ylab = "Error")
+        lines(spline(e1p3_b1$Degree, e1p3_b1$Irreducible, n = 256), col = "red", lwd = 2)
+        points(e1p3_b1$Degree, e1p3_b1$Irreducible, col = "red", pch = 16)
+        
+        # Bias Squared
+        plot(e1p3_b1$Degree, e1p3_b1$BiasSq, type = "n",
+             main = "Bias Squared", xlab = "Polynomial Degree", ylab = "Bias²")
+        lines(spline(e1p3_b1$Degree, e1p3_b1$BiasSq, n = 256), col = "blue", lwd = 2)
+        points(e1p3_b1$Degree, e1p3_b1$BiasSq, col = "blue", pch = 16)
+        
+        # Variance
+        plot(e1p3_b1$Degree, e1p3_b1$Variance, type = "n",
+             main = "Variance", xlab = "Polynomial Degree", ylab = "Variance")
+        lines(spline(e1p3_b1$Degree, e1p3_b1$Variance, n = 256), col = "green", lwd = 2)
+        points(e1p3_b1$Degree, e1p3_b1$Variance, col = "green", pch = 16)
+        
+        dev.off()
+        
+        png_path
+        
+      },
+      format = "file"
+    )
+  )
+}
+
+
+
 
 # E1 ALL ------------------------------------------------------------------
 
@@ -240,6 +346,7 @@ e1_targets <- function() {
   list(
     e1p1_targets(),
     e1p2_targets(),
+    e1p3_targets(),
     tar_quarto(e1_report, "data/reports/exercise-set-1.qmd")
 
   )
