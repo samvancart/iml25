@@ -231,6 +231,9 @@ e1p2_targets <- function() {
 }
 
 
+# P3 ----------------------------------------------------------------------
+
+
 e1p3_targets <- function() {
   tar_plan(
     tar_target(
@@ -336,6 +339,98 @@ e1p3_targets <- function() {
 }
 
 
+# P5 ----------------------------------------------------------------------
+
+
+e1p5_targets <- function() {
+  tar_plan(
+    d_paths = list.files("data/ex_1/", pattern = "^d[0-9]+\\.csv$", full.names = T),
+    tar_target(
+      d_data,
+      {
+       list(
+         data =  fread(d_paths),
+         name = unlist(tstrsplit(basename(d_paths), split = "\\.", keep = 1))
+       )
+      },
+      pattern = map(d_paths),
+      iteration = "list"
+    ),
+    tar_target(
+      e1p5a_fit,
+      {
+        data = d_data$data
+        fit = lm(data[["y"]] ~ data[["x"]])
+        list(
+          data = d_data$data,
+          fit = fit,
+          name = d_data$name
+        )
+      },
+      pattern = map(d_data),
+      iteration = "list"
+    ),
+    tar_target(
+      e1p5a_dts,
+      {
+        fit = e1p5a_fit$fit
+        summ_fit <- summary(fit)
+        dt <- data.table(
+          intercept = summ_fit$coefficients[1],
+          slope_term = summ_fit$coefficients[2],
+          std_error_int = summ_fit$coefficients[3],
+          std_error_slope = summ_fit$coefficients[4],
+          p_value = summ_fit$coefficients[8],
+          r_squared = summ_fit$r.squared
+        )
+        list(
+          data = d_data$data,
+          fit = fit,
+          summary_dt = dt,
+          name = d_data$name
+        )
+      },
+      pattern = map(e1p5a_fit,d_data),
+      iteration = "list"
+    ),
+    tar_target(
+      e1p5a_dt,
+      {
+        dts <- lapply(e1p5a_dts, function(item) {
+          dt <- item$summary_dt
+          dt[, data_name := item$name]
+          dt
+        })
+        rbindlist(dts)
+      }
+    ),
+    tar_target(
+      e1p5b,
+      {
+        plot_path <- "data/plots/e1p5.png"
+        png(plot_path, width = 800, height = 800)
+        par(mfrow = c(2, 2))
+        
+        for(i in seq(e1p5a_dts)) {
+          item <- e1p5a_dts[[i]]
+          data <- item$data
+          name <- item$name
+          summary_dt <- item$summary_dt
+          intercept <- summary_dt$intercept
+          slope_term <- summary_dt$slope_term
+          
+          plot(data$x, data$y, main = name, xlab = "x", ylab = "y", pch = 19, col = "blue")
+          
+          abline(a = intercept, b = slope_term, col = "black", lwd = 2)
+        }
+        
+        dev.off()
+        plot_path
+      },
+      format = "file"
+    )
+  )
+}
 
 
 # E1 ALL ------------------------------------------------------------------
@@ -347,6 +442,7 @@ e1_targets <- function() {
     e1p1_targets(),
     e1p2_targets(),
     e1p3_targets(),
+    e1p5_targets(),
     tar_quarto(e1_report, "data/reports/exercise-set-1.qmd")
 
   )
