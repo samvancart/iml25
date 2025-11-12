@@ -1,0 +1,254 @@
+---
+title: "Exercise Set 1"
+format: 
+  pdf:
+    default-image-extension: png
+---
+
+
+```{r, setup, include=FALSE}
+library(targets)
+library(knitr)
+opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r, include = FALSE}
+tar_load_everything(strict = F, silent=T)
+```
+
+This report contains my answers for exercise set 1.
+
+## Problem 1
+
+### Task a
+
+Drop columns `id` and `partlybad`:
+
+```
+dt[, c("id", "partlybad") := NULL]
+
+```
+
+### Task b
+
+Summary of columns `T84.mean`, `UV_A.mean` and `CS.mean`:
+
+```{r}
+#| echo: false
+print(e1p1_b)
+```
+
+### Task c
+
+List of `t84.mean` mean and standard deviation:
+
+```{r}
+#| echo: false
+print(e1p1_c)
+```
+
+### Task d
+
+
+```{r}
+#| echo: false
+e1p1_d_path <- normalizePath(e1p1_d)
+include_graphics(e1p1_d_path, rel_path = FALSE)
+```
+
+
+
+### Task e
+
+Scatterplot matrix of `UV_A.mean`,`T84.mean` and `H2O84.mean`:
+
+```{r}
+#| echo: false
+e1p1_e_path <- normalizePath(e1p1_e)
+include_graphics(e1p1_e_path, rel_path = FALSE)
+```
+
+
+### Task f
+
+A dummy model was created by first determining the most common class in column `class4` which was `nonevent`.
+Then the probability for an event was calculated by `p_event = nrows events/total nrows`. The ```event``` frequencies
+in the data summed up to 225 which ìs the same value as the frequency of `nonevent` values which means that `p_event=0.5`.
+These dummy predictions produced a score of `0.36269` on the Kaggle leaderboard.
+
+
+## Problem 2
+
+
+### Task a
+
+MSE table for synthetic data:
+
+
+```{r}
+#| echo: false
+kable(e1p2_a)
+```
+
+To choose the polynomial order when given a combined training and validation set but no test set I would look at the
+smallest error value in the table and find out its value in th `Degree` column. I would only be looking at the `Validation` and `CV`
+columns as they are the ones available for this task. The resulting table:
+
+```{r}
+#| echo: false
+kable(e1p2a_min_vals)
+```
+
+As the table shows I should train the model on the training set with `Degree` set to `3` and test it on the validation set.
+
+
+### Task b
+
+Plots of synthetic training set points x and y and fitted polynomials with different values of p:
+
+```{r}
+#| echo: false
+p2_b_path <- normalizePath(e1p2_b_plots)
+include_graphics(p2_b_path, rel_path = FALSE)
+```
+
+
+### Task c
+
+Table of RMSE from fitting different regressors on the real data:
+
+
+```{r}
+#| echo: false
+kable(e1p2_c)
+```
+
+Answers:
+
+1. The Random Forest (RF) is the best regressor because it produces the smallest values for all cases as shown below:
+
+```{r}
+#| echo: false
+kable(e1p2c_min_vals)
+```
+
+
+2. Excluding the *Dummy* model, the values of *Train* are smaller than those of *Test*. The same is true for *CV*.
+The *RF* *Train* value is substantially lower at *0.5760683* compared to a *Test* value of *1.4510838*.
+
+3.The regressors could be improved by excluding certain predictors from the data. Further analysis should
+be done to find out which ones.
+
+## Problem 3
+
+### Task a
+
+1. Training error: The MSE keeps decreasing as flexibility increases. 
+2. Test error: A U-shaped curve. Error decreases and then increases again after reaching a minimum point.
+3. (squared) bias: In general the more flexibility a model has, the less bias there is because the model is able to follow
+the patterns in the data more closely.
+
+4. Variance: In general the variance grows as flexibility increases because with large flexibility even a small change to 
+the data can result in a big change in $\hat{f}$.
+
+5.irreducible (or Bayes) error: The irreducible error curve/line shows the threshold of the lowest achievable MSE for any method and 
+therefore it is constant.
+
+
+### Task b
+
+(i) Table of terms for each degree:
+
+```{r}
+#| echo: false
+kable(e1p3_b1)
+```
+
+
+(ii) Plots:
+
+```{r}
+#| echo: false
+e1p3_b2_path <- normalizePath(e1p3_b2)
+include_graphics(e1p3_b2_path, rel_path = FALSE)
+```
+
+
+(iii) The Irreducible error is constant which makes sense, however the other curves look really similar to each other.
+The variance increases a lot when the degree=6. The Total and MSE are equal.
+
+
+## Problem 5
+
+### Task a
+
+Summary data of fitted models:
+
+```{r}
+#| echo: false
+kable(e1p5a_dt)
+```
+
+The slope terms suggest that when x increases 1 unit, y will increase around 0.5 units in each case.
+
+### Task b
+
+None of the models fit the data very well. The line in d1 looks like it is close to the mean of the observations though.
+
+```{r}
+#| echo: false
+e1p5b_path <- normalizePath(e1p5b)
+include_graphics(e1p5b_path, rel_path = FALSE)
+```
+
+
+### Task c
+
+Non-linearity of the response-predictor relationships applies to d1 and d2. D3 and d4 are linear but each has one point that
+is outside the normal range. For d3 this looks like an outlier whereas for d4 it could be a high leverage point.
+
+Plotting residuals is a way to identify the linearity/non-linearity of the data. Below are plots of the residuals vs predictor x for 
+each data set. D1 implies linearity because there is little indication of a pattern in the residuals. D2 however has a U-shape which is 
+a strong indication of non-linearity. The decreasing line in D3 may be due to the outlier in the data. The values of x in d4 are mostly 
+constant and so not much can be said about linearity.
+
+```{r}
+#| echo: false
+e1p5c_path <- normalizePath(e1p5c)
+include_graphics(e1p5c_path, rel_path = FALSE)
+```
+
+
+##  Problem 6
+
+### Task a
+
+```{r}
+#| echo: false
+print("Bootstrap standard errors:")
+print(apply(e1p6a$t, 2, sd))
+cat("\n")
+print("Original values:")
+print(e1p6a$t0)
+```
+
+After using bootstrap with `R=5000` re-samples, the `std. error` of the result shows that the intercept `t1` is clearly more unstable than the slope `t2`. This means that for the intercept `t1`, the std. error varies `1.5441767` across re-samples when the slope `t2` only varies `0.1636514`. This is 
+also confirmed by the biases which are `t1=0.131211434` and `t2=-0.001837802`. A smaller bias indicates that the original value is a good estimate.
+
+## Task b
+
+The bootstrap algorithm compares the results of a statistic using $n$ re-samples of the original data. In the above exercise it re-samples from `d2.csv`
+and fits a linear model for each re-sample. It then measures how accurate the original statistic (intercept and slope in this case) was based on the 
+results it gets for the re-sampled data. So the bootstrap is computing the `standard deviation` of the statistic.
+
+## Task c
+
+The probability of an observation to end up in the bootstrap sample is always constant because of replacement. 
+So for a population of $n$ sampling $n$ data points the probability of the $j$th observation to not be in the sample is $P=(n-1/n)^n$.
+So if $n$ = 10000 then $P = \left(\tfrac{9999}{10000}\right)^{10000} \approx 0.368$.
+
+
+
+
+
+
