@@ -462,6 +462,15 @@ e1p5_targets <- function() {
         plot_path
       },
       format = "file"
+    ),
+    tar_target(
+      e1p6a,
+      {
+        set.seed(1)
+        data <- d_data[[2]]$data
+        n <- 5000
+        boot(data, lm_std_err_boot, R = n)
+      }
     )
   )
 }
@@ -477,7 +486,7 @@ e1_targets <- function() {
     e1p2_targets(),
     e1p3_targets(),
     e1p5_targets(),
-    tar_quarto(e1_report, "data/reports/exercise-set-1.qmd")
+    tar_quarto(e1_report, "reports/exercise-set-1.qmd")
 
   )
 }

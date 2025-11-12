@@ -106,3 +106,14 @@ get_e1p3_fx <- function(x) {
 
 
 
+
+# P6 ----------------------------------------------------------------------
+
+
+lm_std_err_boot <- function(data, index) {
+  x <- data[["x"]][index]
+  y <- data[["y"]][index]
+  
+  fit <- lm(y ~ x)
+  coef(fit)
+}
