@@ -387,6 +387,7 @@ e1p5_targets <- function() {
           data = d_data$data,
           fit = fit,
           summary_dt = dt,
+          summ_fit = summ_fit,
           name = d_data$name
         )
       },
@@ -422,6 +423,39 @@ e1p5_targets <- function() {
           plot(data$x, data$y, main = name, xlab = "x", ylab = "y", pch = 19, col = "blue")
           
           abline(a = intercept, b = slope_term, col = "black", lwd = 2)
+        }
+        
+        dev.off()
+        plot_path
+      },
+      format = "file"
+    ),
+    tar_target(
+      e1p5c,
+      {
+        plot_path <- "data/plots/e1p5c_residuals.png"
+        png(plot_path, width = 800, height = 800)
+        par(mfrow = c(2, 2))
+        
+        for(i in seq(e1p5a_dts)) {
+          item <- e1p5a_dts[[i]]
+          data <- item$data
+          name <- item$name
+          fit <- item$fit
+          
+          res <- residuals(fit)
+          
+          x <- data$x
+          
+          plot(x, res,
+               xlab = "Predictor x",
+               ylab = "Residuals",
+               main = "Residuals vs Predictor",
+               pch = 19, col = "blue")
+          
+          lines(lowess(x, res), col = "black", lwd = 2)
+          
+          abline(h = 0, col = "red", lwd = 2, lty = 2)
         }
         
         dev.off()
