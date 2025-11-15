@@ -29,6 +29,16 @@ Coefficients for penguins train data fit.
 print(coef(e2p8_a$fit))
 ```
 
+Accuracy on training and test sets without regularisation:
+
+```{r}
+#| echo: false
+print("Train accuracy:")
+print(e2p8_a$train_acc)
+print("Test accuracy:")
+print(e2p8_a$test_acc)
+```
+
 
 Plot of penguins train data predictions.
 
@@ -41,7 +51,25 @@ include_graphics(e2p8a_path, rel_path = FALSE)
 
 
 
+## Task b
 
+Coefficients for penguins train data fit.
+
+```{r}
+#| echo: false
+print(e2p8_b$coef_lasso)
+```
+
+
+Accuracy on training and test sets using lasso with regularisation:
+
+```{r}
+#| echo: false
+print("Train accuracy:")
+print(e2p8_b$train_acc)
+print("Test accuracy:")
+print(e2p8_b$test_acc)
+```
 
 
 

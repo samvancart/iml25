@@ -65,6 +65,41 @@ e2p8_targets <- function() {
         plot_path
       },
       format = "file" 
+    ),
+    tar_target(
+      e2p8_b,
+      {
+        train <- e2p8_a$penguins_train
+        test <- e2p8_a$penguins_test
+        
+        # Cross validate to get lambda
+        set.seed(1)
+        cv_fit <- cv.glmnet(species ~ ., data  = train, family = "binomial")
+        
+        # Try a lambda value
+        lambda <- cv_fit$lambda[35]
+        
+        fit_lasso_reg <- glmnetUtils:::glmnet.formula(species ~ ., data  = train, family = "binomial", lambda = lambda)
+        coef_lasso <- coef(fit_lasso_reg)
+        
+        # Training accuracy
+        train_probs <- predict(fit_lasso_reg, newdata = train, type = "response")
+        train_pred <- ifelse(train_probs > 0.5 , "notAdelie", "Adelie")
+        train_acc <- mean(train_pred == train$species)
+        
+        # Testing accuracy
+        test_probs <- predict(fit_lasso_reg, newdata = test, type = "response")
+        test_pred <- ifelse(test_probs > 0.5, "notAdelie", "Adelie")
+        test_acc <- mean(test_pred == penguins_test$species)
+        
+        list(
+          train_acc = train_acc,
+          test_acc = test_acc,
+          coef_lasso = coef_lasso,
+          fit = fit_lasso_reg
+        )
+        
+      }
     )
   )
 }
