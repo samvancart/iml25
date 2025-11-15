@@ -10,7 +10,9 @@ library(tarchetypes)
 
 
 tar_option_set(
-  packages = c("data.table", "tinytex", "quarto", "knitr", "boot", "randomForest", "e1071", "caret", "kernlab", "gbm"),
+  packages = c("data.table", "tinytex", "quarto", "knitr", 
+               "boot", "randomForest", "e1071", "caret", "kernlab", "gbm",
+               "glmnet", "glmnetUtils"),
   controller = crew::crew_controller_local(workers = 8, seconds_idle = 60)
 
 )
@@ -26,5 +28,6 @@ tar_source()
 
 
 list(
-  e1_targets()
+  e1_targets(),
+  e2_targets()
 )

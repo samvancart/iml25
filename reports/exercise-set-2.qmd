@@ -1,0 +1,47 @@
+---
+title: "Exercise Set 2"
+format: 
+  pdf:
+    default-image-extension: png
+---
+
+
+```{r, setup, include=FALSE}
+library(targets)
+library(knitr)
+opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r, include = FALSE}
+tar_load_everything(strict = F, silent=T)
+```
+
+This report contains my answers for exercise set 2.
+
+## Problem 8
+
+### Task a
+
+Coefficients for penguins train data fit.
+
+```{r}
+#| echo: false
+print(coef(e2p8_a$fit))
+```
+
+
+Plot of penguins train data predictions.
+
+
+```{r}
+#| echo: false
+e2p8a_path <- normalizePath(e2p8_a_plot)
+include_graphics(e2p8a_path, rel_path = FALSE)
+```
+
+
+
+
+
+
+
