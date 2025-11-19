@@ -71,5 +71,22 @@ print("Test accuracy:")
 print(e2p8_b$test_acc)
 ```
 
+## Task c
+
+R gives warnings because the model is fitting the data too well and because there's no regulation, it will try to push probabilities closer to
+0 or 1 forever if the programme didn't stop itself and give the warning.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
