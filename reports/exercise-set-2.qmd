@@ -51,7 +51,7 @@ include_graphics(e2p8a_path, rel_path = FALSE)
 
 
 
-## Task b
+### Task b
 
 Coefficients for penguins train data fit.
 
@@ -71,18 +71,52 @@ print("Test accuracy:")
 print(e2p8_b$test_acc)
 ```
 
-## Task c
+### Task c
 
 R gives warnings because the model is fitting the data too well and because there's no regulation, it will try to push probabilities closer to
 0 or 1 forever if the programme didn't stop itself and give the warning.
 
 
+## Problem 9
 
+According to the textbook:
 
+The discriminant function is linear when p=1 and all classes have a shared variance:
 
+$$
+\delta_k(x) = \frac{x \cdot \mu_k}{\sigma^2}
+- \frac{\mu_k^2}{2\sigma^2}
++ \log(\pi_k)
+\tag{4.18}
+$$
+When each class has its own variance the discriminant function becomes quadratic (non-linear):
 
+$$
+\delta_k(x) = -\frac{1}{2}(x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k)
+- \frac{1}{2}\log\lvert\Sigma_k\rvert + \log \pi_k
+\tag{4.28}
+$$
 
+Expanded form:
 
+$$
+\delta_k(x) = -\frac{1}{2} x^\top \Sigma_k^{-1} x
++ x^\top \Sigma_k^{-1} \mu_k
+- \frac{1}{2} \mu_k^\top \Sigma_k^{-1} \mu_k
+- \frac{1}{2}\log\lvert\Sigma_k\rvert + \log \pi_k
+\tag{4.28}
+$$
+
+## Problem 10
+
+### Task a
+
+Tables of each attribute's means, standard deviations and class probabilities using Laplace smoothing:
+
+```{r}
+#| echo: false
+kable(e2p10a)
+```
 
 
 

@@ -100,6 +100,35 @@ e2p8_targets <- function() {
         )
         
       }
+    ),
+    tar_target(
+      e2p10a,
+      {
+        train <- e2p8_a$penguins_train
+        means <- train[, 
+                       setNames(lapply(.SD, mean), paste0(names(.SD), "_mean")), 
+                       by = species
+        ]
+        sds <- train[, 
+                       setNames(lapply(.SD, sd), paste0(names(.SD), "_sd")), 
+                       by = species
+        ]
+        counts <- train[, .N, by = "species"]
+        pseudo <- 1
+        trials <- sum(counts$N)
+        counts[, smoothed := (N + pseudo/trials + pseudo * 2), by = "species"]
+        counts[, N := NULL]
+        counts[, total := sum(smoothed)]
+        counts[, class_prob := smoothed/total, by = "species"]
+        counts <- counts[, c("species", "class_prob")]
+        
+        means_long <- melt.data.table(means, id.vars = "species")
+        sd_long <- melt.data.table(sds, id.vars = "species")
+        counts_long <- melt.data.table(counts, id.vars = "species")
+        
+        rbindlist(list(means_long, sd_long, counts_long))
+        
+      }
     )
   )
 }
