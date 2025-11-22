@@ -105,14 +105,12 @@ e2p8_targets <- function() {
       e2p10a,
       {
         train <- e2p8_a$penguins_train
-        means <- train[, 
-                       setNames(lapply(.SD, mean), paste0(names(.SD), "_mean")), 
-                       by = species
-        ]
-        sds <- train[, 
-                       setNames(lapply(.SD, sd), paste0(names(.SD), "_sd")), 
-                       by = species
-        ]
+        
+        means <- train[, lapply(.SD, mean), by = species]
+        means[, variable := "mean"]
+        sds <- train[,lapply(.SD, sd), by = species]
+        sds[, variable := "sd"]
+        
         counts <- train[, .N, by = "species"]
         pseudo <- 1
         trials <- sum(counts$N)
@@ -121,12 +119,95 @@ e2p8_targets <- function() {
         counts[, total := sum(smoothed)]
         counts[, class_prob := smoothed/total, by = "species"]
         counts <- counts[, c("species", "class_prob")]
+        counts[, variable := "laplace"]
         
-        means_long <- melt.data.table(means, id.vars = "species")
-        sd_long <- melt.data.table(sds, id.vars = "species")
-        counts_long <- melt.data.table(counts, id.vars = "species")
+        means_long <- melt.data.table(means, id.vars = c("species", "variable"), variable.name = "name")
+        sd_long <- melt.data.table(sds, id.vars = c("species", "variable"), variable.name = "name")
+        counts_long <- melt.data.table(counts, id.vars = c("species", "variable"), variable.name = "name")
         
         rbindlist(list(means_long, sd_long, counts_long))
+        
+      }
+    ),
+    tar_target(
+      e2p10c,
+      {
+        
+        # Extract only the mean and sd rows from training stats
+        feature_dt <- e2p10a[variable %in% c("mean", "sd")]
+        
+        # Extract the prior (laplace-smoothed class probabilities)
+        prob_dt <- e2p10a[variable %in% c("laplace")]
+        
+        # Reshape training stats wide: one row per species × feature,
+        # with columns "mean" and "sd"
+        params <- dcast(e2p10a[variable %in% c("mean","sd")],
+                        species + name ~ variable,
+                        value.var="value")
+        
+        # Load the test set
+        test <- e2p8_a$penguins_test
+        
+        # Ensure numeric columns are properly typed
+        test[, flipper_length_mm := as.numeric(flipper_length_mm)]
+        test[, body_mass_g := as.numeric(body_mass_g)]
+        
+        # Add a unique id for each test observation
+        test[, id := as.numeric(.I)]
+        
+        # Melt test set into long format: one row per id × feature
+        # Columns: species (true label), id, name (feature name), x (observed value)
+        melted_test <- melt.data.table(test,
+                                       id.vars = c("species", "id"),
+                                       variable.name = "name",
+                                       value.name = "x")
+        
+        # Create a Cartesian grid of all test ids × all species
+        # This ensures each test observation will be evaluated under both class models
+        grid <- CJ(id = unique(melted_test$id),
+                   species = unique(params$species))
+        
+        # Join grid with test features (on id) → duplicates each test row for each species
+        # Then join with training parameters (on species + feature name)
+        # Result: fk_dt has id, species, feature name, observed x, mean, sd
+        fk_dt <- grid[melted_test, on="id", allow.cartesian=TRUE][
+          params, on=.(species, name)
+        ]
+        
+        # Compute densities
+        fk_dt[, fk := dnorm(x, mean, sd)]
+        
+        # Collapse across features per id/species
+        likelihoods <- fk_dt[, .(likelihood = prod(fk)), by=.(id, species)]
+        
+        # Attach priors
+        priors <- prob_dt[, .(species, prior=value)]
+        likelihoods <- merge(likelihoods, priors, by="species")
+        
+        # Score = likelihood × prior
+        likelihoods[, score := likelihood * prior]
+        
+        # Normalize across species per id
+        likelihoods[, posterior := score / sum(score), by=id]
+        
+        # Predicted class per id
+        pred <- likelihoods[, .SD[which.max(posterior)], by=id]
+        
+        # Merge predicted species with true species from test set
+        results <- merge(pred[, .(id, predicted_species = species)],
+                         test[, .(id, true_species = species)],
+                         by="id")
+        
+        # Flag correct predictions
+        results[, correct := (predicted_species == true_species)]
+        
+        # Overall accuracy
+        accuracy <- results[, mean(correct)]
+        
+        list(
+          accuracy = accuracy,
+          prediction = pred
+        )
         
       }
     )

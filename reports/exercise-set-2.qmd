@@ -119,6 +119,52 @@ kable(e2p10a)
 ```
 
 
+### Task b
+
+The posterior probability:
+
+$$
+P(Y = k \mid X = x)
+=
+\frac{
+\pi_k \prod_{j=1}^{p} f_{k j}(x_j)
+}{
+\sum_{l=1}^{K} \pi_l \prod_{j=1}^{p} f_{l j}(x_j)
+}
+$$
+
+For this specific case:
+
+$$
+\hat{p}(y=\text{Adelie}\mid x)
+=
+\frac{
+\pi_{\text{Adelie}}\;\displaystyle\prod_{j=1}^{4} f_{\text{Adelie},j}(x_j)
+}{
+\pi_{\text{Adelie}}\;\displaystyle\prod_{j=1}^{4} f_{\text{Adelie},j}(x_j)
+\;+\;
+\pi_{\text{notAdelie}}\;\displaystyle\prod_{j=1}^{4} f_{\text{notAdelie},j}(x_j)
+}
+$$
+
+
+### Task c
+
+The posterior probabilities for the first 3 penguins:
+
+```{r}
+#| echo: false
+print(head(e2p10c$prediction$posterior, n=3))
+```
+
+The accuracy score of the classifier:
+
+```{r}
+#| echo: false
+print(e2p10c$accuracy)
+```
+
+
 
 
 
